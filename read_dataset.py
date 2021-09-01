@@ -8,7 +8,6 @@ Archivo de lectura de la base de datos
 
 import pandas as pd
 
-json_file = './MicSigV1_v1_1.json'
+json_file = './dataset/MicSigV1_v1_1.json'
 df = pd.read_json(json_file)
 
-# vemos las primeras lineas de datos
