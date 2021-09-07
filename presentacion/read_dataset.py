@@ -11,7 +11,7 @@ from scipy import signal
 import numpy as np
 import matplotlib.pyplot as plt
 
-json_file = './dataset/MicSigV1_v1_1.json'
+json_file = '../dataset/MicSigV1_v1_1.json'
 df = pd.read_json(json_file)
 
 # LP list
