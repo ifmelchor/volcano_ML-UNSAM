@@ -19,6 +19,11 @@ types = df['Type']
 LPs = df[types == 'LP']
 nro_LP = len(LPs)
 
+print(LPs.iloc[643])
+print(LPs.iloc[657])
+
+# years
+# print(df['Year'].unique())
 # duraciones = []
 # fq_dominantes = []
 # energia_fq_dominante = []
@@ -54,28 +59,28 @@ nro_LP = len(LPs)
 # plt.xlabel(r'Energía total [cnts$^2$ dB]')
 # plt.show()
 
-while True:
-    fig, axes = plt.subplots(10, 2, figsize=(19, 20), gridspec_kw=dict(width_ratios=[10,3], hspace=0.5))
-    for k in range(10):
-        i = np.random.randint(0, 1044)
-        LP_k = LPs.iloc[i]
-        LP_waveform = LP_k.Data[LP_k.StartPoint:LP_k.EndPoint]
-        N_points = len(LP_waveform)
-        time = np.linspace(0, LP_k.Duration, N_points)
-        axes[k][0].plot(time, LP_waveform, 'k', lw=0.9)
-        axes[k][0].set_ylabel(r'LP$_{%s}$' %i)
-        axes[k][0].set_xlabel('segundos')
-        axes[k][0].set_xlim(0, LP_k.Duration)
+# while True:
+#     fig, axes = plt.subplots(10, 2, figsize=(19, 20), gridspec_kw=dict(width_ratios=[10,3], hspace=0.5))
+#     for k in range(10):
+#         i = np.random.randint(0, 1044)
+#         LP_k = LPs.iloc[i]
+#         LP_waveform = LP_k.Data[LP_k.StartPoint:LP_k.EndPoint]
+#         N_points = len(LP_waveform)
+#         time = np.linspace(0, LP_k.Duration, N_points)
+#         axes[k][0].plot(time, LP_waveform, 'k', lw=0.9)
+#         axes[k][0].set_ylabel(r'LP$_{%s}$' %i)
+#         axes[k][0].set_xlabel('segundos')
+#         axes[k][0].set_xlim(0, LP_k.Duration)
 
-        nps = 1024
-        if N_points < nps:
-            nps = 512
+#         nps = 1024
+#         if N_points < nps:
+#             nps = 512
 
-        f, PSD = signal.welch(LP_waveform, LP_k.SampleRate, nperseg=nps, scaling='density')
-        axes[k][1].plot(f, PSD, color='k')
-        axes[k][1].set_xlabel('freq. [Hz]')
-        axes[k][1].set_ylabel(r'PSD')
-        axes[k][1].grid()
-        axes[k][1].set_xlim(0, 10)
-    plt.show()
-    plt.close()
+#         f, PSD = signal.welch(LP_waveform, LP_k.SampleRate, nperseg=nps, scaling='density')
+#         axes[k][1].plot(f, PSD, color='k')
+#         axes[k][1].set_xlabel('freq. [Hz]')
+#         axes[k][1].set_ylabel(r'PSD')
+#         axes[k][1].grid()
+#         axes[k][1].set_xlim(0, 10)
+#     plt.show()
+#     plt.close()
