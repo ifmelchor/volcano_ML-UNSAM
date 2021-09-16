@@ -17,7 +17,7 @@ except ImportError:
     print(' instala PyWavelet [https://github.com/PyWavelets/pywt] pip3 install PyWavelets')
 
 
-class Extraer(object):
+class LP(object):
     def __init__(self, data, fs=100):
         self.data = signal.detrend(data)
         self.fs = fs
@@ -221,31 +221,71 @@ class Extraer(object):
         return PSD.max(), freq[np.argmax(PSD)]
 
 
+class Generar(object):
+    def __init__(self, json_file):
+        df = pd.read_json(json_file)
+        types = df['Type']
+        self.LPs = df[types == 'LP']
+    
+
+    def get(self, item):
+        lp_row = self.LPs.iloc[item]
+        data = lp_row.Data[lp_row.StartPoint:lp_row.EndPoint]
+        return LP(data, fs=lp_row.SampleRate)
+    
+
+    def calcula(self):
+        # devuelve un dataframe de pandas con la base de datos de los parametros que extrae de cada LP de la base de datos original
+
+        index = []
+        duration = []
+        nro_peaks = []
+        fq_centroid = []
+        for i, lp in enumerate(map(self.get, range(len(self.LPs)))):
+            index.append('LP_{}'.format(i))
+            duration.append(lp.duration)
+            
+            peaks = lp.get_peaks(threshold=0.5)
+            nro_peaks.append(len(peaks))
+
+            fq_centroid.append(lp.get_fq_centroid())
+
+            entropy_1 = lp.get_entropy_parameters()
+            fractal_1 = lp.get_fractal_parameters()
+            wavelet = lp.best_wavelet_fit(n=5, mode='max')
+
+        dout = {
+            'Duration': duration,
+            'NroPeaks': nro_peaks,
+            ''
+        # 'Price': [22000,25000,27000,35000]
+        # }
+        #  pd.DataFrame(cars, columns = ['Brand','Price'], index=['Car_1','Car_2','Car_3','Car_4'])
+
+        return True
+
+
 # aca las probamos con el primer LP
 if __name__ == '__main__':
 
     dset = '../dataset/MicSigV1_v1_1.json'
-    df = pd.read_json(dset)
+    g = Generar(dset)
+    g.calcula()
+    
+    # lp_0 = g.get(0) 
 
-    types = df['Type']
-    LPs = df[types == 'LP']
+    # # extracción de parametros sin banda de fq
+    # attr1 = lp_0.get_peaks(threshold=0.5)
+    # attr2 = lp_0.get_fq_centroid()
+    # attr3 = lp_0.get_entropy_parameters()
+    # attr4 = lp_0.get_fractal_parameters()
+    # attr5 = lp_0.best_wavelet_fit(n=5, mode='max')
 
-    LP1 = LPs.iloc[0]
-    data = LP1.Data[LP1.StartPoint:LP1.EndPoint]
-    ext = Extraer(data)
-
-    # extracción de parametros sin banda de fq
-    attr1 = ext.get_peaks(threshold=0.5)
-    attr2 = ext.get_fq_centroid()
-    attr3 = ext.get_entropy_parameters()
-    attr4 = ext.get_fractal_parameters()
-    attr5 = ext.best_wavelet_fit(n=5, mode='max')
-
-    print(attr1)
-    print(attr2)
-    print(attr3)
-    print(attr4)
-    print(attr5)
+    # print(attr1)
+    # print(attr2)
+    # print(attr3)
+    # print(attr4)
+    # print(attr5)
 
 
 
