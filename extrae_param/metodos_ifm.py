@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from scipy import signal
 
 try:
-    from antropy import perm_entropy
+    import antropy
 except ImportError:
     print(' instala AntroPy [https://raphaelvallat.com/antropy] pip3 install antropy')
 
@@ -127,10 +127,12 @@ class Extraer(object):
         return peak_dict
 
 
-    def get_pentropy(self, order=5, tau=1, **filter_kwargs):
+    def get_entropy_parameters(self, order=5, tau=1, **filter_kwargs):
         """
         Devuelve la entropia de permutación de la señal.
         """
+
+        dout = {}
         
         # filtra la señal
         if filter_kwargs.get('fq_band', None):
@@ -138,10 +140,45 @@ class Extraer(object):
         else:
             data = self.data
         
-        h = perm_entropy(data, order=order, delay=tau, normalize=True)
+        dout['app_entropy'] = antropy.app_entropy(data, order=order)
+        # Approximate entropy is a technique used to quantify the amount of regularity and the unpredictability of fluctuations over time-series data. Smaller values indicates that the data is more regular and predictable.
 
-        return h
+        dout['perm_entropy'] = antropy.perm_entropy(data, order=order, delay=tau, normalize=True)
+
+        dout['svd_entropy'] = antropy.svd_entropy(data, order=order, delay=tau, normalize=True)
+        # SVD entropy is an indicator of the number of eigenvectors that are needed for an adequate explanation of the data set. In other words, it measures the dimensionality of the data.
+        
+        dout['num_zerocross'] = antropy.num_zerocross(data, normalize=True)
+        
+        hjorth_params = antropy.hjorth_params(data)
+        # Hjorth Parameters are indicators of statistical properties used in signal processing in the time domain introduced by Bo Hjorth in 1970. The parameters are activity, mobility, and complexity. EntroPy only returns the mobility and complexity parameters, since activity is simply the variance of x, which can be computed easily with numpy.var().
+
+        dout['hjorth_complex'] = hjorth_params[0]
+        # The complexity gives an estimate of the bandwidth of the signal, which indicates the similarity of the shape of the signal to a pure sine wave (where the value converges to 1). Complexity is defined as the ratio of the mobility of the first derivative of x to the mobility of x.
+
+        dout['hjorth_mobil'] = hjorth_params[1] 
+        # The mobility parameter represents the mean frequency or the proportion of standard deviation of the power spectrum. This is defined as the square root of variance of the first derivative of x divided by the variance of x.
+
+        return dout
     
+
+    def get_fractal_parameters(self, **filter_kwargs):
+
+        dout = {}
+
+        # filtra la señal
+        if filter_kwargs.get('fq_band', None):
+            data = self.filter_data(**filter_kwargs)
+        else:
+            data = self.data
+        
+        dout['detrended_fluctuation'] = antropy.detrended_fluctuation(data)
+        dout['higuchi_fd'] = antropy.higuchi_fd(data)
+        dout['katz_fd'] = antropy.katz_fd(data)
+        dout['petrosian_fd'] = antropy.petrosian_fd(data)
+
+        return dout
+
 
     def wavelet_test(self, **kwargs):
         out = []
@@ -195,22 +232,20 @@ if __name__ == '__main__':
 
     LP1 = LPs.iloc[0]
     data = LP1.Data[LP1.StartPoint:LP1.EndPoint]
-
     ext = Extraer(data)
 
-    # parametros relacionados con la PSD
-    att1 = ext.get_peaks(threshold=0.5) # aca se puede jugar con el threshold
+    # extracción de parametros sin banda de fq
+    attr1 = ext.get_peaks(threshold=0.5)
+    attr2 = ext.get_fq_centroid()
+    attr3 = ext.get_entropy_parameters()
+    attr4 = ext.get_fractal_parameters()
+    attr5 = ext.best_wavelet_fit(n=5, mode='max')
 
-    att2 = ext.get_fq_centroid()
-    
-    # parametros relacionados con la forma de onda
-    att3 = ext.get_pentropy() # aca se puede jugar con los ordenes y los tau
-
-    # parametros relacionados con la transformada wavelet
-    att4 = ext.best_wavelet_fit(n=5, mode='max') # aca se puede jugar con el modo y el n
-
-
-    # inspeccioná la clase y los att
+    print(attr1)
+    print(attr2)
+    print(attr3)
+    print(attr4)
+    print(attr5)
 
 
 
