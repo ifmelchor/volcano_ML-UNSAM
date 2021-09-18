@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import signal
+import itertools as it
 
 try:
     import antropy
@@ -15,6 +16,10 @@ try:
     import pywt
 except ImportError:
     print(' instala PyWavelet [https://github.com/PyWavelets/pywt] pip3 install PyWavelets')
+
+
+def combine(ss):
+    return chain(*map(lambda x: combinations(ss, x), range(0, len(ss)+1)))
 
 
 class LP(object):
@@ -56,19 +61,7 @@ class LP(object):
             PSD = 10*np.log10(PSD)
         
         return freq, PSD
-    
 
-    def get_fq(self, **kwargs):
-        """ 
-        Devuelve la frecuencia dominante
-        """
-
-        f, psd = self.get_psd(**kwargs)
-
-        fq_dominant = f[np.argmax(psd)]
-
-        return fq_dominant
-    
 
     def get_fq_centroid(self, **kwargs):
         """
@@ -102,7 +95,7 @@ class LP(object):
             return
 
 
-    def get_peaks(self, threshold=0.5, **kwargs):
+    def get_peaks(self, threshold=0.5, return_max=False, **kwargs):
         """
         Devuelve un diccionario con los picos dominantes
         """
@@ -123,6 +116,13 @@ class LP(object):
                 'psd':peaks[1]['peak_heights'][i],
                 'width':peak_width[0][i]
             }
+        
+        if return_max:
+            l = []
+            for i, k in peak_dict.items():
+                l.append((k['psd'], i))
+            l.sort(reverse=True)
+            return peak_dict[l[0][1]]
 
         return peak_dict
 
@@ -180,27 +180,25 @@ class LP(object):
         return dout
 
 
-    def wavelet_test(self, **kwargs):
+    def wavelet_test(self, level_min=4, level_max=8, **kwargs):
         out = []
-        l_min = kwargs.get('level_min', 4)
-        l_max = kwargs.get('level_max', 8)
 
-        for l in np.arange(l_min, l_max+1):
+        for l in np.arange(level_min, level_max+1):
             for wlet in pywt.wavelist('db'):
                 max_val, freq = self.wavelet_decompose(wlet, l, **kwargs)
                 out += [(wlet, l, max_val, freq)]
         return out
     
 
-    def best_wavelet_fit(self, n=1, **kwargs):
-        ans = self.wavelet_test(**kwargs)
+    def best_wavelet_fit(self, n=1, level_min=4, level_max=9, **kwargs):
+        ans = self.wavelet_test(level_min=level_min, level_max=level_max, **kwargs)
         ans.sort(key=lambda x: x[2], reverse=True)
         return ans[0:n]
 
 
-    def wavelet_decompose(self, wavelet_name, level, mode='mean'):
+    def wavelet_decompose(self, wavelet_name, level, fq_band=(), mode='mean'):
         wavelet = pywt.Wavelet(wavelet_name)
-        wp = pywt.WaveletPacket(data, wavelet, 'symmetric', maxlevel=level)
+        wp = pywt.WaveletPacket(self.data, wavelet, 'symmetric', maxlevel=level)
         nodes = wp.get_level(level, order='freq')
         values = np.array([n.data for n in nodes], 'd')
         values = abs(values)
@@ -214,9 +212,16 @@ class LP(object):
         
         elif mode == 'max':
             PSD = values.max(axis=1)
-        
         else:
             raise ValueError(' mode must be "mean", "min" or "max"')
+        
+        if fq_band:
+            f_min = fq_band[0]
+            f_max = fq_band[1]
+            f_min_pos = np.argmin(np.abs(freq-f_min))
+            f_max_pos = np.argmin(np.abs(freq-f_max))
+            freq = freq[f_min_pos:f_max_pos]
+            PSD = PSD[f_min_pos:f_max_pos]
             
         return PSD.max(), freq[np.argmax(PSD)]
 
@@ -234,58 +239,106 @@ class Generar(object):
         return LP(data, fs=lp_row.SampleRate)
     
 
-    def calcula(self):
-        # devuelve un dataframe de pandas con la base de datos de los parametros que extrae de cada LP de la base de datos original
+    def to_json(self, file_out, n=-1):
+        """
+        Devuelve la base de datos con los parametros extraidos.
+        El parametros n controla la cantidad de LPs a extraer en orden. Si es -1, calcula todos los LPs
+        """
+
+        if n == -1:
+            n = len(self.LPs)
+        
+        else:
+            if n > len(self.LPs):
+                print(" warn: n es mayor que la cantidad de LPs")
+                return False
+            
+            elif n == 0:
+                print(" warn: n debe ser mayor a 0")
+                return False
+            
+            else:
+                pass
+
 
         index = []
-        duration = []
-        nro_peaks = []
-        fq_centroid = []
-        for i, lp in enumerate(map(self.get, range(len(self.LPs)))):
-            index.append('LP_{}'.format(i))
-            duration.append(lp.duration)
-            
-            peaks = lp.get_peaks(threshold=0.5)
-            nro_peaks.append(len(peaks))
-
-            fq_centroid.append(lp.get_fq_centroid())
-
-            entropy_1 = lp.get_entropy_parameters()
-            fractal_1 = lp.get_fractal_parameters()
-            wavelet = lp.best_wavelet_fit(n=5, mode='max')
-
         dout = {
-            'Duration': duration,
-            'NroPeaks': nro_peaks,
-            ''
-        # 'Price': [22000,25000,27000,35000]
-        # }
-        #  pd.DataFrame(cars, columns = ['Brand','Price'], index=['Car_1','Car_2','Car_3','Car_4'])
+            'Duration':[],
+            'NroPeaks_th_50':[],
+            'NroPeaks_th_75':[],
+            'NroPeaks_th_90':[],
+            'MaxPeakFreq':[],
+            'MaxPeakWidth':[],
+            'MaxPeakEnergy':[],
+            'CentroidPSD':[],
+            'CentroidPSD_1-10':[],
+            'DetrendedFluctuation':[],
+            'HiguchiFd':[],
+            'KatzFd':[],
+            'PetrosianFd':[],
+            'BestWavelet':[],
+            'BestWaveletFq':[]
+        }
 
-        return True
+        order = [3,5,7]
+        delay = [1,3,5]
+        for d, t in it.product(order, delay):
+            key = '_d%i_t%i' % (d, t)
+            dout['AppEntropy'+key] = []
+            dout['PermEntropy'+key] = []
+            dout['SVDEntropy'+key] = []
+            dout['NroZerocross'+key] = []
+            dout['HjorthComplex'+key] = []
+            dout['HjorthMobil'+key] = []
+
+        for i, lp in enumerate(map(self.get, range(n))):
+            print(f' generando base de datos {int(100*(i/n)):>3}%', end='\r')
+
+            index.append('LP_{}'.format(i))
+            
+            dout['Duration'].append(lp.duration)
+            dout['NroPeaks_th_50'].append(len(lp.get_peaks(threshold=0.5)))
+            dout['NroPeaks_th_75'].append(len(lp.get_peaks(threshold=0.75)))
+            dout['NroPeaks_th_90'].append(len(lp.get_peaks(threshold=0.9)))
+            
+            max_peak = lp.get_peaks(return_max=True)
+            dout['MaxPeakFreq'].append(max_peak['fq'])
+            dout['MaxPeakWidth'].append(max_peak['psd'])
+            dout['MaxPeakEnergy'].append(max_peak['width'])
+
+            dout['CentroidPSD'].append(lp.get_fq_centroid())
+            dout['CentroidPSD_1-10'].append(lp.get_fq_centroid(fq_band=(1,10)))
+
+            for t, d in it.product(delay, order):
+                entropy = lp.get_entropy_parameters(fq_band=(1,10), order=d, tau=t)
+                key = '_d%i_t%i' % (d, t)
+                dout['AppEntropy'+key].append(entropy['app_entropy'])
+                dout['PermEntropy'+key].append(entropy['perm_entropy'])
+                dout['SVDEntropy'+key].append(entropy['svd_entropy'])
+                dout['NroZerocross'+key].append(entropy['num_zerocross'])
+                dout['HjorthComplex'+key].append(entropy['hjorth_complex'])
+                dout['HjorthMobil'+key].append(entropy['hjorth_mobil'])
+
+            fractal = lp.get_fractal_parameters(fq_band=(1,10))
+            dout['DetrendedFluctuation'].append(fractal['detrended_fluctuation'])
+            dout['HiguchiFd'].append(fractal['higuchi_fd'])
+            dout['KatzFd'].append(fractal['katz_fd'])
+            dout['PetrosianFd'].append(fractal['petrosian_fd'])
+
+            wavelet = lp.best_wavelet_fit(n=5, fq_band=(1,10), mode='max')
+
+            dout['BestWavelet'].append(wavelet[0][0])
+            best_wavelt_fq_pos = np.abs(np.array([a[3] for a in wavelet])-max_peak['fq']).argmin()
+            dout['BestWaveletFq'].append(wavelet[best_wavelt_fq_pos][0])
+
+        df = pd.DataFrame(dout, columns=dout.keys(), index=index)
+
+        df.to_json(file_out)
+        print(f' database ---> {file_out}')
 
 
-# aca las probamos con el primer LP
 if __name__ == '__main__':
-
-    dset = '../dataset/MicSigV1_v1_1.json'
-    g = Generar(dset)
-    g.calcula()
-    
-    # lp_0 = g.get(0) 
-
-    # # extracción de parametros sin banda de fq
-    # attr1 = lp_0.get_peaks(threshold=0.5)
-    # attr2 = lp_0.get_fq_centroid()
-    # attr3 = lp_0.get_entropy_parameters()
-    # attr4 = lp_0.get_fractal_parameters()
-    # attr5 = lp_0.best_wavelet_fit(n=5, mode='max')
-
-    # print(attr1)
-    # print(attr2)
-    # print(attr3)
-    # print(attr4)
-    # print(attr5)
-
+    g = Generar('../dataset/MicSigV1_v1_1.json')
+    g.to_json('./LP_parametros_1.json')
 
 
