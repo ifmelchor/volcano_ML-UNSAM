@@ -18,12 +18,8 @@ except ImportError:
     print(' instala PyWavelet [https://github.com/PyWavelets/pywt] pip3 install PyWavelets')
 
 
-def combine(ss):
-    return chain(*map(lambda x: combinations(ss, x), range(0, len(ss)+1)))
-
-
 class LP(object):
-    def __init__(self, data, fs=100):
+    def __init__(self, data, fs=50):
         self.data = signal.detrend(data)
         self.fs = fs
         self.duration = len(data)/fs
@@ -236,7 +232,12 @@ class Generar(object):
     def get(self, item):
         lp_row = self.LPs.iloc[item]
         data = lp_row.Data[lp_row.StartPoint:lp_row.EndPoint]
-        return LP(data, fs=lp_row.SampleRate)
+
+        # decimate to 50 sps if SampleRate is 100
+        if lp_row.SampleRate == 100:
+            data = signal.decimate(data, 2)
+
+        return LP(data)
     
 
     def to_json(self, file_out, n=-1):
@@ -339,6 +340,6 @@ class Generar(object):
 
 if __name__ == '__main__':
     g = Generar('../dataset/MicSigV1_v1_1.json')
-    g.to_json('./LP_parametros_1.json')
+    g.to_json('./LP_parametros_2.json')
 
 
