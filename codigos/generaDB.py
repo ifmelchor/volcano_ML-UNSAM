@@ -281,8 +281,8 @@ class Generar(object):
             'BestWaveletFq':[]
         }
 
-        order = [3,5,7]
-        delay = [1,3,5]
+        order = [5] #[3,5,7]
+        delay = [1] #[1,3,5]
         for d, t in it.product(order, delay):
             key = '_d%i_t%i' % (d, t)
             dout['AppEntropy'+key] = []
@@ -313,18 +313,18 @@ class Generar(object):
             for t, d in it.product(delay, order):
                 entropy = lp.get_entropy_parameters(fq_band=(1,10), order=d, tau=t)
                 key = '_d%i_t%i' % (d, t)
-                dout['AppEntropy'+key].append(entropy['app_entropy'])
+                # dout['AppEntropy'+key].append(entropy['app_entropy'])
                 dout['PermEntropy'+key].append(entropy['perm_entropy'])
-                dout['SVDEntropy'+key].append(entropy['svd_entropy'])
+                # dout['SVDEntropy'+key].append(entropy['svd_entropy'])
                 dout['NroZerocross'+key].append(entropy['num_zerocross'])
                 dout['HjorthComplex'+key].append(entropy['hjorth_complex'])
                 dout['HjorthMobil'+key].append(entropy['hjorth_mobil'])
 
             fractal = lp.get_fractal_parameters(fq_band=(1,10))
             dout['DetrendedFluctuation'].append(fractal['detrended_fluctuation'])
-            dout['HiguchiFd'].append(fractal['higuchi_fd'])
-            dout['KatzFd'].append(fractal['katz_fd'])
-            dout['PetrosianFd'].append(fractal['petrosian_fd'])
+            # dout['HiguchiFd'].append(fractal['higuchi_fd'])
+            # dout['KatzFd'].append(fractal['katz_fd'])
+            # dout['PetrosianFd'].append(fractal['petrosian_fd'])
 
             wavelet = lp.best_wavelet_fit(n=5, fq_band=(1,10), mode='max')
 
@@ -340,6 +340,6 @@ class Generar(object):
 
 if __name__ == '__main__':
     g = Generar('../dataset/MicSigV1_v1_1.json')
-    g.to_json('./LP_parametros_2.json')
+    g.to_json('./LP_parametros_3.json')
 
 
