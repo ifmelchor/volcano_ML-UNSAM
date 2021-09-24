@@ -274,9 +274,9 @@ class Generar(object):
             'CentroidPSD':[],
             'CentroidPSD_1-10':[],
             'DetrendedFluctuation':[],
-            'HiguchiFd':[],
-            'KatzFd':[],
-            'PetrosianFd':[],
+            # 'HiguchiFd':[],
+            # 'KatzFd':[],
+            # 'PetrosianFd':[],
             'BestWavelet':[],
             'BestWaveletFq':[]
         }
@@ -285,9 +285,9 @@ class Generar(object):
         delay = [1] #[1,3,5]
         for d, t in it.product(order, delay):
             key = '_d%i_t%i' % (d, t)
-            dout['AppEntropy'+key] = []
+            # dout['AppEntropy'+key] = []
             dout['PermEntropy'+key] = []
-            dout['SVDEntropy'+key] = []
+            # dout['SVDEntropy'+key] = []
             dout['NroZerocross'+key] = []
             dout['HjorthComplex'+key] = []
             dout['HjorthMobil'+key] = []
