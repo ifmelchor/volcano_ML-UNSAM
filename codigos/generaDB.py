@@ -91,7 +91,7 @@ class LP(object):
             return
 
 
-    def get_peaks(self, threshold=0.5, return_max=False, **kwargs):
+    def get_peaks(self, threshold=0.5, return_max=False, return_sort=False, **kwargs):
         """
         Devuelve un diccionario con los picos dominantes
         """
@@ -119,6 +119,14 @@ class LP(object):
                 l.append((k['psd'], i))
             l.sort(reverse=True)
             return peak_dict[l[0][1]]
+        
+        if return_sort:
+            l = []
+            for i, k in peak_dict.items():
+                l.append((k['psd'], i))
+            l.sort(reverse=True)
+            sort_index = [s[1] for s in l]
+            return peak_dict, sort_index
 
         return peak_dict
 
@@ -271,6 +279,12 @@ class Generar(object):
             'MaxPeakFreq':[],
             'MaxPeakWidth':[],
             'MaxPeakEnergy':[],
+            'SndPeakFreq':[],
+            'SndPeakWidth':[],
+            'SndPeakEnergy':[],
+            'ThrPeakFreq':[],
+            'ThrPeakWidth':[],
+            'ThrPeakEnergy':[],
             'CentroidPSD':[],
             'CentroidPSD_1-10':[],
             'DetrendedFluctuation':[],
@@ -302,10 +316,31 @@ class Generar(object):
             dout['NroPeaks_th_75'].append(len(lp.get_peaks(threshold=0.75)))
             dout['NroPeaks_th_90'].append(len(lp.get_peaks(threshold=0.9)))
             
-            max_peak = lp.get_peaks(return_max=True)
+            peaks, sort_idx = lp.get_peaks(threshold=0.7, return_sort=True)
+            max_peak = peaks[sort_idx[0]]
             dout['MaxPeakFreq'].append(max_peak['fq'])
             dout['MaxPeakWidth'].append(max_peak['psd'])
             dout['MaxPeakEnergy'].append(max_peak['width'])
+
+            if len(sort_idx) >= 2:
+                peak = peaks[sort_idx[1]]
+                dout['SndPeakFreq'].append(peak['fq'])
+                dout['SndPeakWidth'].append(peak['psd'])
+                dout['SndPeakEnergy'].append(peak['width'])
+            else:
+                dout['SndPeakFreq'].append(0)
+                dout['SndPeakWidth'].append(0)
+                dout['SndPeakEnergy'].append(0)
+            
+            if len(sort_idx) >= 3:
+                peak = peaks[sort_idx[2]]
+                dout['ThrPeakFreq'].append(peak['fq'])
+                dout['ThrPeakWidth'].append(peak['psd'])
+                dout['ThrPeakEnergy'].append(peak['width'])
+            else:
+                dout['ThrPeakFreq'].append(0)
+                dout['ThrPeakWidth'].append(0)
+                dout['ThrPeakEnergy'].append(0)
 
             dout['CentroidPSD'].append(lp.get_fq_centroid())
             dout['CentroidPSD_1-10'].append(lp.get_fq_centroid(fq_band=(1,10)))
@@ -340,6 +375,6 @@ class Generar(object):
 
 if __name__ == '__main__':
     g = Generar('../dataset/MicSigV1_v1_1.json')
-    g.to_json('./LP_parametros_3.json')
+    g.to_json('./LP_parametros_4.json')
 
 
