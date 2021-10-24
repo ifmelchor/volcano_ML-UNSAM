@@ -39,7 +39,7 @@ class LP(object):
             return self.data
 
 
-    def get_psd(self, fq_band=(), nperseg=1024, noverlap=0.75, db_scale=False):
+    def get_psd(self, fq_band=(), nperseg=1024, noverlap=0.75, db_scale=False, normalize=False):
         """ 
         Devuelve la PSD de la señal
         """
@@ -56,6 +56,9 @@ class LP(object):
         
         if db_scale:
             PSD = 10*np.log10(PSD)
+        
+        if normalize:
+            PSD /= PSD.max()
         
         return freq, PSD
 

@@ -135,7 +135,7 @@ def plot_silhouette(data, n_clusters, show=True, return_labels=False):
 fig, labels = plot_silhouette(X, 5, return_labels=True, show=False)
 
 file_out = 'kmeans_labels.json'
-df = pd.DataFrame({'LP_labels': labels}, index=list(df.index), columns=['LP_labels'])
+df = pd.DataFrame({'Index': range(0, len(labels)),'Label': labels}, index=list(df.index), columns=['Index', 'Label'])
 df.to_json(file_out)
 print(f' database ---> {file_out}')
 fig.savefig('silhouette_kmeans.png')

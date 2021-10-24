@@ -3,12 +3,44 @@
 
 from generaDB import Generar
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def plot_model(dict_in):
+    row =int(np.ceil(len(dict_in)/3))
+
+    fig, axes = plt.subplots(row, 3, figsize=(16,9))
+    gen = Generar()
+
+    for n, ax in enumerate(axes.reshape(axes.size,)):
+        lp_list = dict_in.get(n+1)
+        if lp_list:
+            ax.set_title(n+1, size=12)
+            for lp in lp_list:
+                freq, PSD = gen[lp].get_psd((1,6), normalize=True)
+                ax.plot(freq, PSD, label=lp)
+            ax.legend()
+        else:
+            ax.set_frame_on(False)
+            ax.set_xticks([])
+            ax.set_yticks([])
+
+    return fig
 
 if __name__ == '__main__':
-    gen = Generar()
-    etiquetas = pd.read_json('./modelos/KMeans/kmeans_labels.json')
+    df = pd.read_json('./modelos/KMeans/kmeans_labels.json')
+    labels = df['Label']
     
-    # plotear primer LP
-    gen[0].plot()
+    while True:
+        eventos = {}
+        for i in range(1, 6):
+            clase = df[labels == 3]
+            eventos[i]=list(clase.Index.iloc[np.random.randint(0, high=len(clase), size=3)])
+            
+        fig = plot_model(eventos)
+        fig.suptitle('Modelo KMeans 5 clusters')
+        plt.show()
 
+        plt.close()
 
