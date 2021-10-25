@@ -20,11 +20,12 @@ except ImportError:
 DB = './dataset/raw/MicSigV1_v1_1.json'
 
 class LP(object):
-    def __init__(self, data, fs=50):
+    def __init__(self, data, fs=50, index=None):
         self.data = signal.detrend(data)
         self.fs = fs
         self.duration = len(data)/fs
         self.time = np.linspace(0, self.duration, len(self.data))
+        self.index = index
     
 
     def filter_data(self, fq_band=(), order=5):
@@ -256,7 +257,7 @@ class Generar():
         if lp_row.SampleRate == 100:
             data = signal.decimate(data, 2)
 
-        return LP(data)
+        return LP(data, index=item)
 
 
     def to_json(self, file_out, n=-1):
@@ -291,11 +292,7 @@ class Generar():
             'MaxPeakWidth':[],
             'MaxPeakEnergy':[],
             'SndPeakFreq':[],
-            'SndPeakWidth':[],
-            'SndPeakEnergy':[],
             'ThrPeakFreq':[],
-            'ThrPeakWidth':[],
-            'ThrPeakEnergy':[],
             'CentroidPSD':[],
             'CentroidPSD_1-10':[],
             'DetrendedFluctuation':[],
@@ -306,13 +303,11 @@ class Generar():
             'BestWaveletFq':[]
         }
 
-        order = [5] #[3,5,7]
-        delay = [1] #[1,3,5]
+        order = [5]
+        delay = [1]
         for d, t in it.product(order, delay):
             key = '_d%i_t%i' % (d, t)
-            # dout['AppEntropy'+key] = []
             dout['PermEntropy'+key] = []
-            # dout['SVDEntropy'+key] = []
             dout['NroZerocross'+key] = []
             dout['HjorthComplex'+key] = []
             dout['HjorthMobil'+key] = []
@@ -336,22 +331,14 @@ class Generar():
             if len(sort_idx) >= 2:
                 peak = peaks[sort_idx[1]]
                 dout['SndPeakFreq'].append(peak['fq'])
-                dout['SndPeakWidth'].append(peak['psd'])
-                dout['SndPeakEnergy'].append(peak['width'])
             else:
                 dout['SndPeakFreq'].append(0)
-                dout['SndPeakWidth'].append(0)
-                dout['SndPeakEnergy'].append(0)
             
             if len(sort_idx) >= 3:
                 peak = peaks[sort_idx[2]]
                 dout['ThrPeakFreq'].append(peak['fq'])
-                dout['ThrPeakWidth'].append(peak['psd'])
-                dout['ThrPeakEnergy'].append(peak['width'])
             else:
                 dout['ThrPeakFreq'].append(0)
-                dout['ThrPeakWidth'].append(0)
-                dout['ThrPeakEnergy'].append(0)
 
             dout['CentroidPSD'].append(lp.get_fq_centroid())
             dout['CentroidPSD_1-10'].append(lp.get_fq_centroid(fq_band=(1,10)))
@@ -359,22 +346,18 @@ class Generar():
             for t, d in it.product(delay, order):
                 entropy = lp.get_entropy_parameters(fq_band=(1,10), order=d, tau=t)
                 key = '_d%i_t%i' % (d, t)
-                # dout['AppEntropy'+key].append(entropy['app_entropy'])
                 dout['PermEntropy'+key].append(entropy['perm_entropy'])
-                # dout['SVDEntropy'+key].append(entropy['svd_entropy'])
                 dout['NroZerocross'+key].append(entropy['num_zerocross'])
                 dout['HjorthComplex'+key].append(entropy['hjorth_complex'])
                 dout['HjorthMobil'+key].append(entropy['hjorth_mobil'])
 
             fractal = lp.get_fractal_parameters(fq_band=(1,10))
             dout['DetrendedFluctuation'].append(fractal['detrended_fluctuation'])
-            # dout['HiguchiFd'].append(fractal['higuchi_fd'])
-            # dout['KatzFd'].append(fractal['katz_fd'])
-            # dout['PetrosianFd'].append(fractal['petrosian_fd'])
 
             wavelet = lp.best_wavelet_fit(n=5, fq_band=(1,10), mode='max')
 
             dout['BestWavelet'].append(wavelet[0][0])
+            
             best_wavelt_fq_pos = np.abs(np.array([a[3] for a in wavelet])-max_peak['fq']).argmin()
             dout['BestWaveletFq'].append(wavelet[best_wavelt_fq_pos][0])
 
@@ -386,4 +369,4 @@ class Generar():
 
 if __name__ == '__main__':
     g = Generar()
-    g.to_json('./dataset/LP_parametros_x.json')
+    g.to_json('./dataset/LP_parametros_3.json')

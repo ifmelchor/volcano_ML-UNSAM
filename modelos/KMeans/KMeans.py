@@ -13,9 +13,10 @@ from sklearn.cluster import KMeans
 # lee dataset procesado
 dset = [
     "../../dataset/LP_parametros_1.json", 
-    "../../dataset/LP_parametros_2.json"
+    "../../dataset/LP_parametros_2.json",
+    "../../dataset/LP_parametros_3.json"
     ]
-df = pd.read_json(dset[1])
+df = pd.read_json(dset[2])
 
 no_stan = [
     "NroPeaks_th_50", 
