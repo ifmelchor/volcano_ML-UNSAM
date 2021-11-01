@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -17,7 +18,8 @@ try:
 except ImportError:
     print(' instala PyWavelet [https://github.com/PyWavelets/pywt] pip3 install PyWavelets')
 
-DB = './dataset/raw/MicSigV1_v1_1.json'
+path_file = os.path.dirname(os.path.realpath(__file__))
+DB = '%s/dataset/raw/MicSigV1_v1_1.json' % path_file
 
 class LP(object):
     def __init__(self, data, fs=50, index=None):
