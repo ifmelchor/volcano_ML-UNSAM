@@ -6,7 +6,7 @@ from sklearn.metrics import silhouette_score
 from sklearn.cluster import KMeans
 
 import sys
-sys.path.append( '../..' )
+sys.path.append( '../../../' )
 from utils import plot_silhouette, data_preprocesados
 
 X = data_preprocesados(2)
