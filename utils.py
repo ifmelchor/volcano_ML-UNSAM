@@ -66,7 +66,7 @@ def data_preprocesados(n, onehot=False, n_components=False, include_categorical=
         X = np.hstack((X_non_stand.to_numpy(), X_ss))
 
     if isinstance(n_components, int):
-        pca = PCA(n_components=2)
+        pca = PCA(n_components=n_components)
         X = pca.fit_transform(X)
         print(pca.explained_variance_ratio_, pca.explained_variance_ratio_.sum())
     
@@ -255,3 +255,22 @@ def plot_mixture(X, Y_, means, covariances, index, title):
     plt.yticks(())
     plt.title(title)
     plt.show()
+
+
+def plot_LP_list(lp_list):
+    fig, ax = plt.subplots(1,2, figsize=(16,4), gridspec_kw={'width_ratios':[1,0.5]})
+    x = 0
+    for n, lp in enumerate(lp_list):
+        ax[0].plot(lp.time, lp.data/lp.data.max()+n*2)
+        if lp.time[-1]>x:
+            x = lp.time[-1]
+        freq, PSD = lp.get_psd((1,6), normalize=True)
+        ax[1].plot(freq, PSD, label=r'LP$_{%i}$' %lp.index)
+    ax[0].set_xlim(0, x)
+    ax[0].set_xlabel('Tiempo [sec]')
+    ax[0].set_yticks([])
+    ax[1].set_xlabel('Frecuencia [Hz]')
+    ax[1].set_ylabel('PSD')
+
+    fig.legend()
+    return fig

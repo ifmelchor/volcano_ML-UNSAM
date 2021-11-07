@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-from generaDB import Generar
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+import sys
+sys.path.append( '../../..' )
+from generaDB import  Generar
 
 def plot_model(dict_in):
     row =int(np.ceil(len(dict_in)/3))
@@ -29,13 +31,13 @@ def plot_model(dict_in):
     return fig
 
 if __name__ == '__main__':
-    df = pd.read_json('./modelos/KMeans/kmeans_labels.json')
+    df = pd.read_json('./kmeans_labels.json')
     labels = df['Label']
     
     while True:
         eventos = {}
         for i in range(1, 6):
-            clase = df[labels == 3]
+            clase = df[labels == i]
             eventos[i]=list(clase.Index.iloc[np.random.randint(0, high=len(clase), size=3)])
             
         fig = plot_model(eventos)

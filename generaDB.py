@@ -239,9 +239,9 @@ class LP(object):
 
 class Generar():
     def __init__(self):
-        df = pd.read_json(DB)
-        types = df['Type']
-        self.LPs = df[types == 'LP']
+        self._df = pd.read_json(DB)
+        types = self._df['Type']
+        self.LPs = self._df[types == 'LP']
     
     def __getitem__(self, i):
         return self.get(i)
