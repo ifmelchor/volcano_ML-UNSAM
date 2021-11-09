@@ -257,7 +257,7 @@ def plot_mixture(X, Y_, means, covariances, index, title):
     plt.show()
 
 
-def plot_LP_list(lp_list):
+def plot_LP_list(lp_list, show=True):
     fig, ax = plt.subplots(1,2, figsize=(16,4), gridspec_kw={'width_ratios':[1,0.5]})
     x = 0
     for n, lp in enumerate(lp_list):
@@ -273,4 +273,35 @@ def plot_LP_list(lp_list):
     ax[1].set_ylabel('PSD')
 
     fig.legend()
-    return fig
+
+    if show:
+        plt.show()
+        plt.close()
+    
+    else:
+        return fig
+
+
+def combine_list(ldl):
+    it = True
+
+    while it:
+        for xi, xj in itertools.product(ldl,ldl):
+            if xi != xj:
+                if list(set(xi) & set(xj)):
+                    i = ldl.index(xi)
+                    j = ldl.index(xj)
+                    new_item = list(set(xi + xj))
+                    ldl[i] = new_item
+                    ldl.remove(ldl[j])
+
+                    if len(ldl) > 1:
+                        it = True
+                        break
+                    else:
+                        it = False
+                
+                else:
+                    it = False
+    
+    return ldl

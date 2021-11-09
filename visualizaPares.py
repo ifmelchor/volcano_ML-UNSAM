@@ -1,35 +1,43 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+import csv
+import random
+import numpy as np
+from itertools import chain
 from generaDB import Generar
-from utils import plot_LP_list
-import matplotlib.pyplot as plt
+from utils import combine_list, plot_LP_list
+
+ldl = []
+with open('pares.csv', newline='\n') as csvfile:
+    reader = csv.reader(csvfile, delimiter=',')
+    for row in reader:
+        if row[0][0] != '#':
+            li = list(map(int, row))
+            ldl.append(li)
+
+labels = combine_list(ldl)
+print('Number of lists/labels: ', len(labels))
+
+# take one
+def take_one(size):
+    return random.randint(0,size-1)
+
+label_list = list(chain(*labels))
+label_list_size = list(map(len, labels))
+
+# comapare between labels
+# labels_index_rand = list(map(take_one, label_list_size))
+# LPindex_test = [lab[i] for lab,i in zip(labels, labels_index_rand)]
+# LPindex_test.sort()
+# print(LPindex_test)
+# LPindex_test = np.array(LPindex_test)
+
+#compare intra labels
+LPindex_test = np.array(labels[0])
 
 gen = Generar()
-
-# Lista de posibles pares mediante la inspeccion visual del procesado del KMeans
-par = [
-    (168,688),
-    (685,698),
-    (12,300),
-    (684,1032),
-    (300,777),
-    (324,142),
-    (112,869),
-    (100,394),
-    (178,684),
-    (147,567,392),
-    (226,649),
-    (253,476),
-    (264,30),
-    (98,340),
-    (237,772),
-    (420,6),
-    (248,72)
-]
-
-for p in par:
-    fig = plot_LP_list(map(gen.get, p))
-    file_name = '_'.join(map(str, p))
-    fig.savefig('./imag/LP_%s.png' % file_name)
-    plt.close()
+while True:
+    index = LPindex_test[np.random.choice(LPindex_test.shape[0], 3)]
+    LP_list = map(gen.get, index)
+    fig = plot_LP_list(LP_list)
