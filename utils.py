@@ -7,12 +7,14 @@ import matplotlib.colors  as mcolor
 import matplotlib.pyplot as plt
 
 import os
+import csv
 import itertools
 import pandas as pd
 import numpy as np
 from collections import Counter
 from scipy import linalg
 
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
@@ -29,7 +31,14 @@ def LP_datos():
     return Generar()
 
 
-def data_preprocesados(n, onehot=False, n_components=False, include_categorical=True):
+def LP_PSDs(test_size=0.2):
+    g = LP_datos()
+    x = np.array([lp.get_psd(fq_band=(0.5,10), nperseg=512, normalize=True)[1] for lp in g])
+    x_train, x_test = train_test_split(x, test_size=test_size)
+    return x_train, x_test
+
+
+def data_preprocesados(n=2, n_components=False, include_categorical=False, onehot=False):
     dset = [
     "%s/dataset/LP_parametros_1.json" % path_file, 
     "%s/dataset/LP_parametros_2.json" % path_file,
@@ -55,7 +64,6 @@ def data_preprocesados(n, onehot=False, n_components=False, include_categorical=
         oe = OrdinalEncoder()
         X_oe = oe.fit_transform(df[["BestWavelet", "BestWaveletFq"]])
 
-
     # Estandarizamos el resto
     ss = StandardScaler()
     X_ss = ss.fit_transform(X_stand)
@@ -65,7 +73,7 @@ def data_preprocesados(n, onehot=False, n_components=False, include_categorical=
     else:
         X = np.hstack((X_non_stand.to_numpy(), X_ss))
 
-    if isinstance(n_components, int):
+    if n_components and isinstance(n_components, int):
         pca = PCA(n_components=n_components)
         X = pca.fit_transform(X)
         print(pca.explained_variance_ratio_, pca.explained_variance_ratio_.sum())
@@ -203,9 +211,7 @@ def plot_silhouette(data, n_clusters, show=True, return_labels=False):
 
 
 def plot_DBSCAN_score(outs):
-
     fig, ax = plt.subplots(1,1)
-
     max_score = -1
     best_eps = None
     best_min_sample = None
@@ -305,3 +311,36 @@ def combine_list(ldl):
                     it = False
     
     return ldl
+
+
+def etiquetas():
+    file_name = os.path.join(path_file, 'pares2.csv')
+
+    ldl = []
+    with open(file_name, newline='\n') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        for row in reader:
+            if row[0][0] != '#':
+                li = list(map(int, row))
+                ldl.append(li)
+    
+    LP_index = combine_list(ldl)
+    [lpi.sort() for lpi in LP_index]
+    label_size = list(map(len, LP_index))
+    label = [[n+1]*ls for n, ls in enumerate(label_size)]
+
+    index_list = list(itertools.chain(*LP_index))
+    label_list = list(itertools.chain(*label))
+
+    return index_list, label_list
+
+
+def entrenables(**kwargs):
+    lp_idx, lp_labels = etiquetas()
+    X = data_preprocesados(**kwargs)
+
+    X_labeled = np.empty((len(lp_idx), X.shape[1]))
+    for n, idx in enumerate(lp_idx):
+        X_labeled[n,:] = X[idx,:]
+
+    return X_labeled, np.array(lp_labels)
