@@ -2,16 +2,22 @@
 # coding=utf-8
 
 
-import matplotlib.pyplot as plt
 import os
 import csv
 import itertools
 import pandas as pd
 import numpy as np
 
+import matplotlib.cm  as cm
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+import matplotlib.patches as mpatch
+from collections import Counter
+
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.neighbors import NearestCentroid
 
 from generaDB import Generar
 
@@ -154,3 +160,57 @@ def entrenables(**kwargs):
         X_labeled[n,:] = X[idx,:]
 
     return X_labeled, np.array(lp_labels)
+
+
+def plot_labels(X, Y, title=None, cmap='rainbow', show_centroid=False, ellipse=None):
+
+    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+    ax.set_title(title)
+
+    labels = list(Counter(Y).keys())
+    labels.sort()
+    norm = mcolors.Normalize(min(labels), max(labels))
+
+    ax.scatter(X[:,0], X[:,1], c=Y, cmap=cmap, ec='k', norm=norm, marker='o', s=50)
+    h = [plt.Line2D([0], [0], linestyle="none", marker="o", c=cm.get_cmap(cmap)(norm(c)), label=c, alpha=1) for c in labels]
+
+    if show_centroid:
+        nc = NearestCentroid()
+        nc.fit(X, Y)
+        ax.scatter(nc.centroids_[:, 0], nc.centroids_[:, 1], ec='k', marker='*', c='k', s=300)
+        h += [plt.Line2D([0], [0], linestyle="none", marker="*", c='k', ms=10, alpha=1)]
+        labels += ['centroid']
+
+    if ellipse:
+        for n, (mean, covar) in enumerate(zip(ellipse[0], ellipse[1])):
+            v, w = np.linalg.eigh(covar)
+            v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+            u = w[0] / np.linalg.norm(w[0])
+            angle = np.arctan(u[1] / u[0])
+            angle = 180.0 * angle / np.pi
+            ell = mpatch.Ellipse(mean, v[0], v[1], 180.0 + angle, ec='k', color=cm.get_cmap(cmap)(norm(n)))
+            ell.set_clip_box(ax.bbox)
+            ell.set_alpha(0.35)
+            ax.add_artist(ell)
+
+    fig.legend(h, labels, title='Labels')
+
+
+def plot_some_LP(y_labels, k_cluster, rand_int=3,  y_index=None, verbose=True):
+    gen = LP_datos()
+
+    if not isinstance(y_index, np.ndarray):
+        y_index = np.arange(len(gen))
+
+    k_index = y_index[np.where(y_labels==k_cluster)]
+
+    if rand_int == -1:
+        LP_index = k_index
+    
+    else:
+        LP_index = k_index[np.random.choice(k_index.shape[0], rand_int, replace=False)]
+
+    if verbose:
+        print(k_cluster, LP_index)
+
+    plot_LP_list(map(gen.get, LP_index))
