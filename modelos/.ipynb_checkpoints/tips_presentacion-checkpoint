@@ -1,0 +1,23 @@
+
+
+Lo primero que hicimos fue extraer parametros de la serie temporal y montar un base de datos para poder aplicar unupervised ML
+
+No todos los parametros eran igual de buenos, ni todos los modelos funcionaban bien.
+
+Aplicamos PCA, TSNE, GMM, KMeans, MeanShift, Hierarchical, etc.
+con metrics Silohuette
+
+Cambiamos ciertos parametros en la DB y vimos que son muy sensibles. A final, el que mejor resultado dio fue GMM con 4 clusters.
+
+Mediante una inpección visual de pares de sañales con una buena probabilidad de pertencia de clase (GMM) pudismos etiquetar 100 señales en 15 familias (la mayoria de 2 y 3). Sin embargo, la cantidad de datos etiquetados es muy pequeña como para tratar de entrar un clasificador.
+
+Tenemos dos opciones: o buscamos más etiquetas (lo que requiere muchas horas de trabajo) o buscamos soluciones en las redes neuronales. Optamos por lo segundo y estos es lo que vamos a hacer.
+
+(1)
+crear un autoencoder
+y aplicar KMeans/TSNE/GMM en la matriz escondida para clasificar 
+
+(2)
+crear un autoencoder
+entrenar un clasificador en los LP con etiquetas con las capas del autoencoder
+
