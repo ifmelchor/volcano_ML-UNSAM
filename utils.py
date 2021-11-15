@@ -27,7 +27,7 @@ def LP_PSDs(test_size=0.2):
     g = LP_datos()
     x = np.array([lp.get_psd(fq_band=(0.5,10), nperseg=512, normalize=True)[1] for lp in g])
     x_train, x_test = train_test_split(x, test_size=test_size)
-    return x_train, x_test
+    return x, (x_train, x_test)
 
 
 def data_preprocesados(n=2, n_components=False, include_categorical=False, onehot=False):
