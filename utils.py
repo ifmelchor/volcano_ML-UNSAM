@@ -79,7 +79,8 @@ def data_preprocesados(n=2, n_components=False, include_categorical=False, oneho
     return X
 
 
-def plot_LP_list(lp_list, show=True):
+def plot_LP_list(lp_list):
+    lp_label = list()
     fig, ax = plt.subplots(1,2, figsize=(16,4), gridspec_kw={'width_ratios':[1,0.5]})
     x = 0
     for n, lp in enumerate(lp_list):
@@ -87,21 +88,22 @@ def plot_LP_list(lp_list, show=True):
         if lp.time[-1]>x:
             x = lp.time[-1]
         freq, PSD = lp.get_psd((1,6), normalize=True)
-        ax[1].plot(freq, PSD, label=r'LP$_{%i}$' %lp.index)
-    ax[0].set_xlim(0, x)
-    ax[0].set_xlabel('Tiempo [sec]')
-    ax[0].set_yticks([])
-    ax[1].set_xlabel('Frecuencia [Hz]')
-    ax[1].set_ylabel('PSD')
-
-    fig.legend()
-
-    if show:
-        plt.show()
-        plt.close()
+        ax[1].plot(freq, PSD)
+        lp_label.append(r'LP$_{%i}$' %lp.index)
     
-    else:
-        return fig
+    ax[0].set_title('Señal LP', fontsize= 26)
+    ax[0].tick_params(axis='both', which='major', labelsize=20, length=6, width=3)
+    ax[0].set_xlim(0, x)
+    ax[0].set_xlabel('Tiempo [sec]', fontsize= 20)
+    ax[0].set_yticks([])
+    
+    ax[1].set_title('PSD vs Frec.', fontsize= 26)
+    ax[1].tick_params(axis='both', which='major', labelsize=20, length=6, width=3)
+    ax[1].set_xlabel('Frecuencia [Hz]', fontsize= 20)
+    ax[1].set_ylabel('PSD', fontsize= 20)
+    ax[1].legend(lp_label, title='Labels', title_fontsize=20, fontsize=18, edgecolor="black",
+                bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    
 
 
 def combine_list(ldl):
@@ -165,15 +167,23 @@ def entrenables(**kwargs):
 def plot_labels(X, Y, title=None, cmap='rainbow', show_centroid=False, ellipse=None):
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 8))
-    ax.set_title(title)
+    ax.set_title(title, fontsize= 26)
 
     labels = list(Counter(Y).keys())
     labels.sort()
     norm = mcolors.Normalize(min(labels), max(labels))
-
-    ax.scatter(X[:,0], X[:,1], c=Y, cmap=cmap, ec='k', norm=norm, marker='o', s=50)
-    h = [plt.Line2D([0], [0], linestyle="none", marker="o", c=cm.get_cmap(cmap)(norm(c)), label=c, alpha=1) for c in labels]
-
+    
+    for l in labels:
+        ax.scatter(X[Y==l, 0], X[Y==l, 1], norm=norm, cmap=cmap, ec='k',
+                   c=Y[Y==l], marker='o', s=50)
+    h = [plt.Line2D([0], [0], linestyle="none", marker="o", c=cm.get_cmap(cmap)(norm(c)), alpha=1) for c in labels]
+    
+    if labels[0] == -1:
+              labels[labels.index(-1)] = 'Outlier'
+    
+    ax.legend(h, labels, title='Labels', title_fontsize=20, fontsize=18, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    ax.tick_params(axis='both', which='major', labelsize=20, length=6, width=3)
+    
     if show_centroid:
         nc = NearestCentroid()
         nc.fit(X, Y)
@@ -192,8 +202,6 @@ def plot_labels(X, Y, title=None, cmap='rainbow', show_centroid=False, ellipse=N
             ell.set_clip_box(ax.bbox)
             ell.set_alpha(0.35)
             ax.add_artist(ell)
-
-    fig.legend(h, labels, title='Labels')
 
 
 def plot_some_LP(y_labels, k_cluster, rand_int=3,  y_index=None, verbose=True):
