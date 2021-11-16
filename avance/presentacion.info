@@ -1,0 +1,14 @@
+
+Jueves 9 de Septiembre.
+HORA: 15.50 hr
+DURACION: 9 min.
+
+Diapo 1. Presentación del grupo. Nombres de los participantes y opcionalmente nombre del grupo.
+
+Diapo 2. Presentación del dataset. De dónde sale, metadata (tipo de datos, cantidad de unidades, cantidad de features).
+
+Diapos 3-5/6. AED, con gráficos y conclusiones sobre lo que aprendieron del dataset.
+
+NOTA: El objetivo acá es mostrar que el dataset de LPs, a pesar de tener una clasificación idéntica, esta constituido por diferentes espectros y formas de onda. Esto lo podemos mostrar gráficamente mediante el cálculo de la frecuencia dominante de cada evento y de su duración y comparándolo.
+
+Diapo 6/7. Problema a resolver. Tipo de problema (clasificación / regresión), estrategia propouesta a priori.
